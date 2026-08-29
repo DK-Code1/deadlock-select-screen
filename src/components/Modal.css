@@ -1,0 +1,40 @@
+.modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* animation: fadeIn 0.3s ease-out; */
+}
+
+.menubutton button {
+    cursor: pointer;
+    border: none;
+    padding: .5rem 2rem;
+    color: black;
+    font-weight: 800;
+    background-color: gray;
+    border: solid 2px black;
+}
+
+.menubutton button:hover {
+    background-color: white;
+
+}
+
+.modal-content {
+
+    width: 37%;
+    backdrop-filter: blur(50px) brightness(1.5);
+
+    height: 50%;
+    overflow-y: auto;
+    position: relative;
+
+    border: solid 2px #525149;
+}
