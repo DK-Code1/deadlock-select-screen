@@ -74,8 +74,10 @@ const hero_colors = {
 
 export function Home() {
 
-    const { characters, isRosterMode, toggleSelectionMode, selectedCharacters, setSelectedCharacters, toggleCharacter, selectionDone, setSelectionDone, displayedCharacter, setDisplayedCharacter } = useContext(CharactersContext)
+    const { characters, isRosterMode, toggleSelectionMode, selectedCharacters, setSelectedCharacters, toggleCharacter, change_character_priority, selectionDone, setSelectionDone, displayedCharacter, setDisplayedCharacter } = useContext(CharactersContext)
 
+    const canPlay = Object.keys(selectedCharacters).length > 2
+    const [randomizeCount, setRandomizeCount] = useState(Math.max(3, Object.keys(selectedCharacters).length));
 
     const [loreOpen, setLoreOpen] = useState(false)
     const [aboutModalOpen, setAboutModalOpen] = useState(false)
@@ -191,14 +193,14 @@ export function Home() {
         //play_select_clip("unselect", displayedCharacter)
 
         for (let i = 0; i < 20; i++) {
-            var random_characters = []
+            var random_characters = {}
 
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < randomizeCount; i++) {
                 var random = Math.floor(Math.random() * 38)
-                while (random_characters.includes(random)) {
+                while (random in random_characters) {
                     random = Math.floor(Math.random() * 38)
                 }
-                random_characters.push(random)
+                random_characters[random] = 0
             }
 
             await sleep(50)
@@ -206,7 +208,7 @@ export function Home() {
             //setDisplayedCharacter(random_characters.at(-1))
             setSelectedCharacters(random_characters)
             play_hover()
-            finishRandomize(random_characters.at(-1))
+            finishRandomize(Object.keys(random_characters).at(-1))
 
         }
 
@@ -241,12 +243,20 @@ export function Home() {
 
     }, [])
 
+    useEffect(() => {
+        setRandomizeCount(Math.max(3, Object.keys(selectedCharacters).length));
+    }, [Object.keys(selectedCharacters).length]);
+
     function play_button_hover(e) {
 
         var type = e.type
 
         var element = play_button_ref.current
         var image_element = element.children[2]
+
+        if (!canPlay){
+            return
+        }
 
         if (type == "mouseenter") {
 
@@ -259,6 +269,18 @@ export function Home() {
             image_element.src = "play_box.png"
         }
 
+    }
+
+    function change_random_count(e){
+        if (e.deltaY < 0){
+            console.log("UP")
+            setRandomizeCount(prev=>prev+1)
+        }
+        else{
+            setRandomizeCount(Math.max(3, randomizeCount -1))
+            
+        }
+        
     }
 
 
@@ -298,10 +320,10 @@ export function Home() {
 
                 <div className="characters-grid">
                     {characters.map((item, index) => (
-                        <Character key={item.name + index} character={item} character_index={index} toggleCharacter={toggleCharacter}
-                            isSelected={selectedCharacters.includes(index)} selectionDone={selectionDone} 
+                        <Character key={item.name + index} character={item} character_index={index} priority={selectedCharacters[index]} toggleCharacter={toggleCharacter}
+                            isSelected={index in selectedCharacters}  selectionDone={selectionDone} 
                             setSelectionDone={setSelectionDone} play_hover={play_hover}
-                            setDisplayedCharacter={setDisplayedCharacter} 
+                            setDisplayedCharacter={setDisplayedCharacter} change_character_priority={change_character_priority}
                             onEnter={onEnter} onLeave={onLeave} play_select_clip={play_select_clip}>
 
                         </Character>
@@ -311,7 +333,8 @@ export function Home() {
 
                 <div className="play-button-container" >
 
-                    <button ref={play_button_ref} onMouseEnter={play_button_hover} onMouseLeave={play_button_hover} className="play-button">
+                    <button ref={play_button_ref} onMouseEnter={play_button_hover} onMouseLeave={play_button_hover} className={`play-button ${canPlay ? "" : "inactive"}`}
+                            onClick={()=>{play_voice_audio(`${import.meta.env.VITE_ASSETS_SOURCE}vo/Rem/unselect_10.opus`)}}>
                         <p>PLAY</p>
                         <img className="play-button-image" src="play_btn_flames.gif"></img>
                         <img className="play-button-image" src="play_box.png">
@@ -377,7 +400,7 @@ export function Home() {
                             <img src="random.png"></img>
                         </div>
 
-                        <p>RANDOMIZE</p>
+                        <p onWheel={change_random_count} title="Scroll wheel to change number of chars">RANDOMIZE({randomizeCount})</p>
                     </button>
 
                     <a href="https://ko-fi.com/dkstuff" target="_blank" className="bottom-bar-randomizer">
