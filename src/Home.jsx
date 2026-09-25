@@ -8,6 +8,7 @@ import { useSingleAudio } from "./hooks/useSingleAudio";
 import { useHoverDelay } from "./hooks/useHoverDelay"
 
 import voice_list from "./assets/vo_list.json"
+import { usePressedKeys } from "./hooks/usePressedKeys";
 
 // import { Canvas, useFrame } from "@react-three/fiber";
 // import { useGLTF, OrbitControls } from "@react-three/drei";
@@ -93,6 +94,7 @@ export function Home() {
     const play_button_ref = useRef(null)
 
     const { onEnter, onLeave } = useHoverDelay(setDisplayedCharacter, 150)
+    const pressedKeys = usePressedKeys()
 
     const { autoPlay, toggleMute } = useBGM()
     const play_hover = useHover(50)
@@ -127,6 +129,8 @@ export function Home() {
         }, 200);
 
     }
+    
+
 
 
     // useEffect(() => {
@@ -273,8 +277,7 @@ export function Home() {
 
     function change_random_count(e){
         if (e.deltaY < 0){
-            console.log("UP")
-            setRandomizeCount(prev=>prev+1)
+            setRandomizeCount(Math.min(38, randomizeCount+1))
         }
         else{
             setRandomizeCount(Math.max(3, randomizeCount -1))
@@ -286,13 +289,17 @@ export function Home() {
 
     if (!characters) {
         return (
-            <h1>Loading</h1>
+            <div className="loading-screen">
+                <img src="logo.png"></img>
+                <h1>Loading...</h1>
+
+            </div>
         )
     }
 
 
     return (
-        <div className="screen">
+        <div id="screen" className="screen">
 
 
             {/* <div className="top-bar">
@@ -306,7 +313,7 @@ export function Home() {
 
 
 
-            <video className="video-background" src="roster_bg_loop.webm" ref={video => video && (video.playbackRate = 0.5)} autoPlay muted loop> </video>
+            <video className="video-background" src="roster_bg_loop.webm" ref={video => video && (video.playbackRate = 0.5)} autoPlay muted loop playsInline disablePictureInPicture></video>
             <button className="mute-button" onClick={toggleMute} >
                 <img src={`${autoPlay ? "music_on.png" : "music_off.png"}`}></img>
                 <p>{autoPlay ? "MUSIC ON" : "MUSIC OFF"}</p>
@@ -324,7 +331,7 @@ export function Home() {
                             isSelected={index in selectedCharacters}  selectionDone={selectionDone} 
                             setSelectionDone={setSelectionDone} play_hover={play_hover}
                             setDisplayedCharacter={setDisplayedCharacter} change_character_priority={change_character_priority}
-                            onEnter={onEnter} onLeave={onLeave} play_select_clip={play_select_clip}>
+                            onEnter={onEnter} onLeave={onLeave} play_select_clip={play_select_clip} pressedKeys={pressedKeys.current}>
 
                         </Character>
                     ))}
