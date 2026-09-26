@@ -511,7 +511,6 @@ content: "";
   flex-direction: column;
   left: 150%;
   top: 25%;
-  bottom: 25;
   transform: translateY(-25%);
   width: fit-content;
   background-color: rgba(28, 28, 28, 0.816);
