@@ -5,8 +5,10 @@ import { Modal } from "./components/Modal";
 import { CharactersContext } from "./context/CharactersContext";
 import { useHover } from "./hooks/useHover";
 import { useSingleAudio } from "./hooks/useSingleAudio";
+import { useHoverDelay } from "./hooks/useHoverDelay"
 
 import voice_list from "./assets/vo_list.json"
+import { usePressedKeys } from "./hooks/usePressedKeys";
 
 // import { Canvas, useFrame } from "@react-three/fiber";
 // import { useGLTF, OrbitControls } from "@react-three/drei";
@@ -73,13 +75,15 @@ const hero_colors = {
 
 export function Home() {
 
-    const { characters, selectedCharacter, setSelectedCharacter, selectionDone, setSelectionDone } = useContext(CharactersContext)
+    const { characters, isRosterMode, toggleSelectionMode, selectedCharacters, setSelectedCharacters, toggleCharacter, change_character_priority, selectionDone, setSelectionDone, displayedCharacter, setDisplayedCharacter } = useContext(CharactersContext)
 
+    const canPlay = Object.keys(selectedCharacters).length > 2
+    const [randomizeCount, setRandomizeCount] = useState(Math.max(3, Object.keys(selectedCharacters).length));
 
     const [loreOpen, setLoreOpen] = useState(false)
     const [aboutModalOpen, setAboutModalOpen] = useState(false)
 
-    const current_colors = characters ? hero_colors[characters[selectedCharacter].name] : {}
+    const current_colors = characters ? hero_colors[characters[displayedCharacter].name] : {}
 
     const hero_color = current_colors.color
     const hero_tag_color = current_colors.text_back ?? hero_color
@@ -89,9 +93,12 @@ export function Home() {
     const character_image_shadow = useRef(null)
     const play_button_ref = useRef(null)
 
-    const {autoPlay, toggleMute} = useBGM()
+    const { onEnter, onLeave } = useHoverDelay(setDisplayedCharacter, 150)
+    const pressedKeys = usePressedKeys()
+
+    const { autoPlay, toggleMute } = useBGM()
     const play_hover = useHover(50)
-    const play_unselect_audio = useSingleAudio(1, 0.15)
+    const play_select_audio = useSingleAudio(1, 0.15)
     const play_voice_audio = useSingleAudio(50, 0.4)
 
 
@@ -108,55 +115,71 @@ export function Home() {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    
+
     const timer = useRef(null);
-
-
-
-    async function finishRandomize() {
+    async function finishRandomize(last_char) {
 
 
         clearTimeout(timer.current);
-        timer.current = setTimeout(() => { setSelectionDone(true) }, 200);
+        timer.current = setTimeout(() => { 
+            setSelectionDone(true), 
+            play_select_clip("select", last_char) 
+            setDisplayedCharacter(last_char)
+        }, 200);
 
     }
-
-    async function randomize() {
-        setSelectionDone(false)
-
-        for (let i = 0; i < 20; i++) {
-
-            await sleep(50)
-            var random = Math.floor(Math.random() * 38)
-            setSelectedCharacter(random)
-            play_hover()
-            finishRandomize()
-
-        }
+    
 
 
-    }
 
-    useEffect(() => {
-        if (!characters) {
-            return
-        }
+    // useEffect(() => {
+    //     if (!characters) {
+    //         return
+    //     }
 
-        var char_name = characters[selectedCharacter].name
+    //     var char_name = characters[displayedCharacter].name
 
 
-        if (selectionDone) {
+    //     if (selectionDone) {
+
+    //         var clip_list = voice_list[char_name]["selected"].length
+    //         var random_clip = Math.floor(Math.random() * clip_list)
+
+    //         var voice_clip = voice_list[char_name]["selected"].at(random_clip)
+    //         play_select_audio(`${import.meta.env.VITE_ASSETS_SOURCE}sounds/select.mp3`)
+
+
+
+    //         play_voice_audio(`${import.meta.env.VITE_ASSETS_SOURCE}vo/${char_name}/${voice_clip}`)
+
+    //     }
+    //     else {
+    //         let clip_list = voice_list[char_name]["unselected"].length
+
+    //         let random_clip = Math.floor(Math.random() * clip_list)
+
+    //         let voice_clip = voice_list[char_name]["unselected"].at(random_clip)
+
+    //         play_voice_audio(`${import.meta.env.VITE_ASSETS_SOURCE}vo/${char_name}/${voice_clip}`)
+    //     }
+
+    // }, [selectedCharacters])
+
+    function play_select_clip(audio_type, char_index) {
+
+        var char_name = characters[char_index].name
+        if (audio_type === "select") {
+
 
             var clip_list = voice_list[char_name]["selected"].length
             var random_clip = Math.floor(Math.random() * clip_list)
 
             var voice_clip = voice_list[char_name]["selected"].at(random_clip)
-            play_unselect_audio(`${import.meta.env.VITE_ASSETS_SOURCE}sounds/select.mp3`)
-
-
-
+            play_select_audio(`${import.meta.env.VITE_ASSETS_SOURCE}sounds/select.mp3`)
             play_voice_audio(`${import.meta.env.VITE_ASSETS_SOURCE}vo/${char_name}/${voice_clip}`)
-
         }
+
         else {
             let clip_list = voice_list[char_name]["unselected"].length
 
@@ -165,9 +188,36 @@ export function Home() {
             let voice_clip = voice_list[char_name]["unselected"].at(random_clip)
 
             play_voice_audio(`${import.meta.env.VITE_ASSETS_SOURCE}vo/${char_name}/${voice_clip}`)
+
         }
 
-    }, [selectionDone])
+    }
+
+    async function randomize() {
+        //play_select_clip("unselect", displayedCharacter)
+
+        for (let i = 0; i < 20; i++) {
+            var random_characters = {}
+
+            for (let i = 0; i < randomizeCount; i++) {
+                var random = Math.floor(Math.random() * 38)
+                while (random in random_characters) {
+                    random = Math.floor(Math.random() * 38)
+                }
+                random_characters[random] = 0
+            }
+
+            await sleep(50)
+
+            //setDisplayedCharacter(random_characters.at(-1))
+            setSelectedCharacters(random_characters)
+            play_hover()
+            finishRandomize(Object.keys(random_characters).at(-1))
+
+        }
+
+    }
+
 
     function rotate_character(e) {
         if (!character_image.current) {
@@ -197,12 +247,20 @@ export function Home() {
 
     }, [])
 
+    useEffect(() => {
+        setRandomizeCount(Math.max(3, Object.keys(selectedCharacters).length));
+    }, [Object.keys(selectedCharacters).length]);
+
     function play_button_hover(e) {
 
         var type = e.type
 
         var element = play_button_ref.current
         var image_element = element.children[2]
+
+        if (!canPlay){
+            return
+        }
 
         if (type == "mouseenter") {
 
@@ -217,16 +275,31 @@ export function Home() {
 
     }
 
+    function change_random_count(e){
+        if (e.deltaY < 0){
+            setRandomizeCount(Math.min(38, randomizeCount+1))
+        }
+        else{
+            setRandomizeCount(Math.max(3, randomizeCount -1))
+            
+        }
+        
+    }
+
 
     if (!characters) {
         return (
-            <h1>Loading</h1>
+            <div className="loading-screen">
+                <img src="logo.png"></img>
+                <h1>Loading...</h1>
+
+            </div>
         )
     }
 
 
     return (
-        <div className="screen">
+        <div id="screen" className="screen">
 
 
             {/* <div className="top-bar">
@@ -238,9 +311,9 @@ export function Home() {
 
             </div> */}
 
-            
 
-            <video className="video-background" src="roster_bg_loop.webm" ref={video => video && (video.playbackRate = 0.5)} autoPlay muted loop> </video>
+
+            <video className="video-background" src="roster_bg_loop.webm" ref={video => video && (video.playbackRate = 0.5)} autoPlay muted loop playsInline disablePictureInPicture></video>
             <button className="mute-button" onClick={toggleMute} >
                 <img src={`${autoPlay ? "music_on.png" : "music_off.png"}`}></img>
                 <p>{autoPlay ? "MUSIC ON" : "MUSIC OFF"}</p>
@@ -249,14 +322,16 @@ export function Home() {
 
                 <div className="character-selection-title">
                     <p>DEADLOCK</p>
-                    <h1>SELECT HERO</h1>
+                    <h1>{isRosterMode ? "CREATE ROSTER" : "SELECT HERO"}</h1>
                 </div>
 
                 <div className="characters-grid">
                     {characters.map((item, index) => (
-                        <Character key={item.name + index} character={item} character_index={index}
-                            isSelected={selectedCharacter == index} selectCharacter={setSelectedCharacter}
-                            selectionDone={selectionDone} setSelectionDone={setSelectionDone} play_hover={play_hover} >
+                        <Character key={item.name + index} character={item} character_index={index} priority={selectedCharacters[index]} toggleCharacter={toggleCharacter}
+                            isSelected={index in selectedCharacters}  selectionDone={selectionDone} 
+                            setSelectionDone={setSelectionDone} play_hover={play_hover}
+                            setDisplayedCharacter={setDisplayedCharacter} change_character_priority={change_character_priority}
+                            onEnter={onEnter} onLeave={onLeave} play_select_clip={play_select_clip} pressedKeys={pressedKeys.current}>
 
                         </Character>
                     ))}
@@ -265,7 +340,8 @@ export function Home() {
 
                 <div className="play-button-container" >
 
-                    <button ref={play_button_ref} onMouseEnter={play_button_hover} onMouseLeave={play_button_hover} className="play-button">
+                    <button ref={play_button_ref} onMouseEnter={play_button_hover} onMouseLeave={play_button_hover} className={`play-button ${canPlay ? "" : "inactive"}`}
+                            onClick={()=>{play_voice_audio(`${import.meta.env.VITE_ASSETS_SOURCE}vo/Rem/unselect_10.opus`)}}>
                         <p>PLAY</p>
                         <img className="play-button-image" src="play_btn_flames.gif"></img>
                         <img className="play-button-image" src="play_box.png">
@@ -279,20 +355,20 @@ export function Home() {
 
             <div className="player-character" >
 
-                <img key={characters[selectedCharacter].name} className="character-background" src={`${import.meta.env.VITE_ASSETS_SOURCE}backgrounds/${characters[selectedCharacter].background}`} />
-                <img ref={character_image_shadow} key={characters[selectedCharacter].name + 2} className="character-shadow" src={`${import.meta.env.VITE_ASSETS_SOURCE}characters/${characters[selectedCharacter].name}.png`} ></img>
+                <img key={characters[displayedCharacter].name} className="character-background" src={`${import.meta.env.VITE_ASSETS_SOURCE}backgrounds/${characters[displayedCharacter].background}`} />
+                <img ref={character_image_shadow} key={characters[displayedCharacter].name + 2} className="character-shadow" src={`${import.meta.env.VITE_ASSETS_SOURCE}characters/${characters[displayedCharacter].name}.png`} ></img>
 
-                <img ref={character_image} key={characters[selectedCharacter].name + 1} className="character" src={`${import.meta.env.VITE_ASSETS_SOURCE}characters/${characters[selectedCharacter].name}.png`} ></img>
+                <img ref={character_image} key={characters[displayedCharacter].name + 1} className="character" src={`${import.meta.env.VITE_ASSETS_SOURCE}characters/${characters[displayedCharacter].name}.png`} ></img>
 
                 {/* <model-viewer className="canvas" alt="Paradox" src="Paradox2.glb"  shadow-intensity="1" camera-controls touch-action="pan-y"></model-viewer> */}
 
                 <div className="player-character-info">
-                    <img className="player-character-info-name" src={`${import.meta.env.VITE_ASSETS_SOURCE}names/${characters[selectedCharacter].name}.svg`}></img>
+                    <img className="player-character-info-name" src={`${import.meta.env.VITE_ASSETS_SOURCE}names/${characters[displayedCharacter].name}.svg`}></img>
                     <div className="player-character-info-tags-container">
 
 
 
-                        {characters[selectedCharacter].tags.map((tag) => (
+                        {characters[displayedCharacter].tags.map((tag) => (
                             <div className="player-character-tag-container">
                                 <div style={{ backgroundColor: hero_tag_color }} className="player-character-tag-background" > </div>
                                 <p style={{ color: hero_text_color }} key={tag} className="player-character-info-tag" >{tag}</p>
@@ -305,9 +381,9 @@ export function Home() {
                     </div>
 
                     <div className="player-character-info-skills-container">
-                        {characters[selectedCharacter].abilities.map((ability, index) => (
+                        {characters[displayedCharacter].abilities.map((ability, index) => (
                             <div style={{ color: hero_color }} className="player-character-info-skill">
-                                <img title={ability} src={`${import.meta.env.VITE_ASSETS_SOURCE}abilities/${characters[selectedCharacter].name}/${index + 1}.png`}>
+                                <img title={ability} src={`${import.meta.env.VITE_ASSETS_SOURCE}abilities/${characters[displayedCharacter].name}/${index + 1}.png`}>
                                 </img>
                             </div>
                         ))}
@@ -331,7 +407,7 @@ export function Home() {
                             <img src="random.png"></img>
                         </div>
 
-                        <p>RANDOMIZE</p>
+                        <p onWheel={change_random_count} title="Scroll wheel to change number of chars">RANDOMIZE({randomizeCount})</p>
                     </button>
 
                     <a href="https://ko-fi.com/dkstuff" target="_blank" className="bottom-bar-randomizer">
@@ -371,7 +447,7 @@ export function Home() {
                         Backstory:
                     </h1>
                     <div className="character-lore-text-container">
-                        <p> {characters[selectedCharacter].lore} </p>
+                        <p> {characters[displayedCharacter].lore} </p>
 
                     </div>
 
