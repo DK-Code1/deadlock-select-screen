@@ -31,13 +31,15 @@ import { usePressedKeys } from "./hooks/usePressedKeys";
 const hero_colors = {
     "Abrams": { color: "#2092AE" },
     "Apollo": { color: "#FF3333" },
+    "Baba": { color: "#895672" },
     "Bebop": { color: "#9F4734" },
     "Billy": { color: "#D4AD0E", text: "#10130D" },
     "Calico": { color: "#572798" },
     "Celeste": { color: "#BBA9E1", text: "#10130D" },
+    "Deadman Danny": { color: "#CE8D2A" },
     "Doorman": { color: "#B77528" },
-    "Drifter": { color: "#9D2C2B" },
 
+    "Drifter": { color: "#9D2C2B" },
     "Dynamo": { color: "#D0B945" },
     "Graves": { color: "#D9F334", text: "#10130D" },
     "Grey Talon": { color: "#5EB083" },
@@ -53,19 +55,24 @@ const hero_colors = {
     "Mina": { color: "#A9171E", text: "#A9171E", text_back: "#200B0B" },
     "Mirage": { color: "#6A2E68" },
     "Mo Krill": { color: "#C58428" },
+    "Nurse Harrow": { color: "#f55e20" },
     "Paige": { color: "#258F63" },
     "Paradox": { color: "#983952" },
 
+
     "Pocket": { color: "#858617" },
+    "Rat King": { color: "#733033" },
     "Rem": { color: "#5383D1", text: "#10130D" },
     "Seven": { color: "#CC861E" },
     "Shiv": { color: "#E52A68" },
     "Silver": { color: "#BFBC9F", text: "#10130D" },
     "Sinclair": { color: "#6B6B6B", text: "#10130D" },
+    "Solomon": { color: "#AA9E7E"},
     "Venator": { color: "#BD3599" },
-    "Victor": { color: "#658B6F" },
 
+    "Victor": { color: "#658B6F" },
     "Vindicta": { color: "#A2C7E5", text: "#10130D" },
+    "Violet": { color: "#653cbc" },
     "Viscous": { color: "#319826" },
     "Vyper": { color: "#A7AD00", text: "#10130D" },
     "Warden": { color: "#4D68A3" },
@@ -83,7 +90,7 @@ export function Home() {
     const [loreOpen, setLoreOpen] = useState(false)
     const [aboutModalOpen, setAboutModalOpen] = useState(false)
 
-    const current_colors = characters ? hero_colors[characters[displayedCharacter].name] : {}
+    const current_colors = characters ? hero_colors[characters[displayedCharacter].name]?? "" : {}
 
     const hero_color = current_colors.color
     const hero_tag_color = current_colors.text_back ?? hero_color
