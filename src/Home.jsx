@@ -207,9 +207,9 @@ export function Home() {
             var random_characters = {}
 
             for (let i = 0; i < randomizeCount; i++) {
-                var random = Math.floor(Math.random() * 38)
+                var random = Math.floor(Math.random() * 44)
                 while (random in random_characters) {
-                    random = Math.floor(Math.random() * 38)
+                    random = Math.floor(Math.random() * 44)
                 }
                 random_characters[random] = 0
             }
