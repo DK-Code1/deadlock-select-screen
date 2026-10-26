@@ -62,14 +62,21 @@ export function Character({ character, character_index, priority, toggleCharacte
 
             <div key={character.name} title={character.name} onPointerEnter={setDisplayCharacter} onPointerLeave={() => {
                 setIsHovered(false),
-                onLeave(character_index)
-            }} onPointerDown={handleClick} onContextMenu={(e) => e.preventDefault()}
-                className={`character-cell  ${isSelected ? "selected" : ""} 
+                onLeave(character_index) }} 
+                onPointerDown={handleClick} onContextMenu={(e) => e.preventDefault()}
+                className={`character-cell ${character.new? "new" : ""} ${character.locked? "locked" : ""}  ${isSelected ? "selected" : ""} 
                     ${selectionDone ? (isSelected ? "done-selected" : "done-unselected") : ""}
                     ${isHovered ? "hovered" : ""}
                     ${priority === 1 ? "priority" : priority >= 2 ? "highpriority" : ""}`} >
 
                 <img src={`${import.meta.env.VITE_ASSETS_SOURCE}icons/${character.icon}`}></img>
+
+                {character.new && (
+                    <div className="character-cell-newtag">
+                        <p>NEW</p>
+                    </div>
+                )}
+
                 {isHovered && (
                     <img className="character-cell-fire" src="fire.gif"></img>
 
